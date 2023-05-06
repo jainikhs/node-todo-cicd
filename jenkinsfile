@@ -1,0 +1,31 @@
+pipeline{
+    agent{ label 'new_dev' }
+    
+    stages{
+        stage('code'){
+            steps {
+                git url: 'https://github.com/jainikhs/node-todo-cicd.git', branch: 'master'
+            }
+        }
+         stage('Build and Test'){
+            steps {
+                sh 'docker build . -t jainnikh3/node-todo-app-cicd-new:latest'
+            }
+        }
+        stage('Login and Push Image'){
+        	steps {
+            	echo 'Loggin in docker hub and pushing image...'
+          withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'dockerhub',usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                	sh "docker login -u $USERNAME -p $PASSWORD"
+                	sh "docker push jainnikh3/node-todo-app-cicd:latest"
+            	}
+        	}
+    	}
+      stage('Deploy'){
+            steps {
+                sh 'docker-compose down && docker-compose up -d'
+            }
+        }
+    
+    }
+}
